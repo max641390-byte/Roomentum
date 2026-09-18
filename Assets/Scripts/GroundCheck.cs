@@ -11,7 +11,6 @@ public class GroundCheck : MonoBehaviour
         if ((groundLayer.value & (1 << other.gameObject.layer)) != 0)
         {
             IsGrounded = true;
-            Debug.Log("Ground detected!");
         }
     }
 

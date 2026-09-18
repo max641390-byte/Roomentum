@@ -3,66 +3,256 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    //Public
+    [Header("Movement")]
     public float MoveSpeed;
     public float walkAcc;
     public float airborneWalkAcc;
     public float JumpForce;
     public float JumpBufferTime;
     public float HangTime;
+    public float GroundStickForce;
+    public float JumpCutMultiplier;
+    public float MaxFallSpeed;
     public float CoyoteTime;
 
+    [Header("Gravity")]
+    public float Gravity;
+    public float FallGravity;
+
+    [Header("Abilities")]
+    public float DashSpeed;
+    public float DashDuration;
+    public float DashCooldown;
+    public float DashBoost;
+    public float NaturalDashBoostDecay;
+    public float AgainstDashBoostDecay;
+    public float WithDashBoostDecay;
+    public float NaturalAttackBoostDecay;
+    public float AgainstAttackBoostDecay;
+    public float WithAttackBoostDecay;
+    public float WallJumpForce;
+    public float WallJumpHorizontalForce;
+    public float GliderGravityMultiplier;
+    public float AttackBoost;
+    public float AttackDuration;
+    public float AttackCooldown;
+
+    //Private refs
+    [Header("References")]
     [SerializeField] private InputActionReference _move;
     [SerializeField] private InputActionReference _jump;
+    [SerializeField] private InputActionReference _dash;
+    [SerializeField] private InputActionReference _attack;
+    [SerializeField] private GameObject _attackHitbox;
     [SerializeField] private GroundCheck _groundCheck;
+    [SerializeField] private Wallcheck _wallCheck;
+    [SerializeField] private AttackCheck _attackCheck;
 
+    //Private
     private Rigidbody2D _rb;
+    private PlayerAbilities _abilities;
     private float _moveDirection;
+    private float _facingDirection;
     private float _jumpBufferTimer;
     private float _coyoteTimer;
     private float _hangTimer;
     private float _previousVelocityY;
+    private bool _doubleJumpUsed;
+    private bool _dashUsed;
+    private float _dashTimer;
+    private float _dashCooldownTimer;
+    private Vector2 _dashDirection;
+    private bool _isDashing;
+    private bool _jumpHeld;
+    private bool _dashJumpBuffered;
+    private bool _isTouchingWall;
+    private float _wallDirection;
+    private bool _isAttacking;
+    private float _attackTimer;
+    private float _attackCooldownTimer;
+    private float _attackHitboxOffsetX;
+    private float _attackDirection;
+    private bool _attackBoosted;
+
+    //Velocity
+    private Vector2 _walkVelocity;
+    private Vector2 _dashVelocity;
+    private Vector2 _jumpVelocity;
+    private Vector2 _dashBoostVelocity;
+    private Vector2 _attackBoostVelocity;
 
     private void OnEnable()
     {
         _jump.action.started += Jump;
+        _dash.action.started += Dash;
+        _attack.action.started += Attack;
     }
-
     private void OnDisable()
     {
         _jump.action.started -= Jump;
+        _dash.action.started -= Dash;
+        _attack.action.started -= Attack;
     }
-
     void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
-    }
+        _abilities = GetComponent<PlayerAbilities>();
 
+        _attackHitboxOffsetX = Mathf.Abs(_attackHitbox.transform.localPosition.x);
+        _facingDirection = transform.localScale.x >= 0 ? 1f : -1f;
+    }
+    void Start()
+    {
+        _walkVelocity = Vector2.zero;
+        _dashVelocity = Vector2.zero;
+        _jumpVelocity = Vector2.zero;
+        _isDashing = false;
+    }
     void Update()
     {
-        _moveDirection = _move.action.ReadValue<float>();
-        if (_jumpBufferTimer > 0) _jumpBufferTimer -= Time.deltaTime;
+        _moveDirection = _move.action.ReadValue<Vector2>().x;
+        _jumpHeld = _jump.action.IsPressed();
+        _isTouchingWall = _wallCheck.IsTouchingWall;
+        _wallDirection = _wallCheck.WallDirection;
 
-        if (_groundCheck.IsGrounded) _coyoteTimer = CoyoteTime;
+        if (_jumpBufferTimer > 0) _jumpBufferTimer -= Time.deltaTime;
+        if (_dashCooldownTimer > 0) _dashCooldownTimer -= Time.deltaTime;
+        if (_moveDirection != 0) _facingDirection = Mathf.Sign(_moveDirection);
+
+        if (_groundCheck.IsGrounded)
+        {
+            _coyoteTimer = CoyoteTime;
+
+            _doubleJumpUsed = false;
+            _dashUsed = false;
+        }
         else if (_coyoteTimer > 0) _coyoteTimer -= Time.deltaTime;
     }
 
     void FixedUpdate()
     {
-        float targetSpeed = _moveDirection * MoveSpeed;
+        HandleMovement();
+        HandleDash();
+        HandleJump();
+        HandleGravity();
+        HandleAttack();
 
-        float acceleration = _groundCheck.IsGrounded ? walkAcc : airborneWalkAcc;
+        HandleVelocityCalculation();
+    }
 
-        _rb.linearVelocityX = Mathf.MoveTowards(_rb.linearVelocityX, targetSpeed, acceleration * Time.fixedDeltaTime);
-
-        if (_jumpBufferTimer > 0 && _coyoteTimer > 0)
+    private void HandleMovement()
+    {
+        if (_isDashing)
         {
-            _rb.AddForceY(JumpForce);
+            _walkVelocity = Vector2.zero;
+            return;
+        }
+
+        _walkVelocity.x = Mathf.MoveTowards(_walkVelocity.x, _moveDirection * MoveSpeed, (_groundCheck.IsGrounded ? walkAcc : airborneWalkAcc) * Time.fixedDeltaTime);
+    }
+    private void HandleDash()
+    {
+        if (_isDashing)
+        {
+            _dashTimer -= Time.fixedDeltaTime;
+            _dashVelocity = _dashDirection * DashSpeed;
+            _jumpVelocity.y = 0f;
+
+            if (_dashTimer <= 0)
+            {
+                _isDashing = false;
+                _dashVelocity = Vector2.zero;
+
+                _jumpVelocity.y = 0f;
+
+                _dashBoostVelocity = new Vector2(_dashDirection.x * DashBoost, 0f);
+            }
+
+            return;
+        }
+
+        _dashVelocity = Vector2.zero;
+
+        float decay = NaturalDashBoostDecay;
+
+        if (_moveDirection != 0)
+        {
+            if (Mathf.Sign(_moveDirection) == Mathf.Sign(_dashBoostVelocity.x))
+            {
+                decay = WithDashBoostDecay;
+            }
+            else
+            {
+                decay = AgainstDashBoostDecay;
+            }
+        }
+
+        _dashBoostVelocity.x = Mathf.MoveTowards(_dashBoostVelocity.x, 0f, decay * Time.fixedDeltaTime);
+
+        _dashBoostVelocity.y = 0f;
+    }
+    private void HandleJump()
+    {
+        if (_isDashing) return;
+
+        bool jumped = false;
+
+        if (_dashJumpBuffered)
+        {
+            if (_coyoteTimer > 0)
+            {
+                _jumpVelocity.y = JumpForce;
+
+                _coyoteTimer = 0;
+                jumped = true;
+            }
+            else if (_abilities.CanDoubleJump && !_doubleJumpUsed)
+            {
+                _hangTimer = 0f;
+                _jumpVelocity.y = JumpForce;
+
+                _doubleJumpUsed = true;
+                jumped = true;
+            }
+
+            _dashJumpBuffered = false;
+            _jumpBufferTimer = 0f;
+        }
+        else if (_jumpBufferTimer > 0 && _coyoteTimer > 0)
+        {
+            _jumpVelocity.y = JumpForce;
 
             _jumpBufferTimer = 0;
             _coyoteTimer = 0;
+
+            jumped = true;
+        }
+        else if (_jumpBufferTimer > 0 && _isTouchingWall && _abilities.CanWallJump)
+        {
+            _jumpVelocity.y = WallJumpForce;
+            _walkVelocity.x = _wallDirection * WallJumpHorizontalForce;
+
+            _jumpBufferTimer = 0;
+            _hangTimer = 0f;
+
+            _dashUsed = false;
+            _dashCooldownTimer = 0f;
+
+            jumped = true;
+        }
+        else if (_jumpBufferTimer > 0 && _abilities.CanDoubleJump && !_doubleJumpUsed)
+        {
+            _hangTimer = 0f;
+            _jumpVelocity.y = JumpForce;
+
+            _jumpBufferTimer = 0;
+            _doubleJumpUsed = true;
+
+            jumped = true;
         }
 
-        if (_previousVelocityY > 0 && _rb.linearVelocityY <= 0)
+        if (!jumped && _previousVelocityY > 0 && _jumpVelocity.y <= 0)
         {
             _hangTimer = HangTime;
         }
@@ -70,14 +260,120 @@ public class PlayerController : MonoBehaviour
         if (_hangTimer > 0)
         {
             _hangTimer -= Time.fixedDeltaTime;
-            _rb.linearVelocityY = 0;
+            _jumpVelocity.y = 0;
         }
 
-        _previousVelocityY = _rb.linearVelocityY;
+        _previousVelocityY = _jumpVelocity.y;
+    }
+    private void HandleGravity()
+    {
+        if (_groundCheck.IsGrounded && _jumpVelocity.y <= 0)
+        {
+            _jumpVelocity.y = -GroundStickForce;
+            return;
+        }
+
+        if (_jumpVelocity.y > 0)
+        {
+            _jumpVelocity.y -= Gravity * Time.fixedDeltaTime;
+        }
+        else if (_jumpHeld && _abilities.CanGlide)
+        {
+            _jumpVelocity.y -= FallGravity * GliderGravityMultiplier * Time.fixedDeltaTime;
+        }
+        else
+        {
+            _jumpVelocity.y -= FallGravity * Time.fixedDeltaTime;
+        }
+
+        _jumpVelocity.y = Mathf.Max(_jumpVelocity.y, -MaxFallSpeed);
+
+        if (!_jumpHeld && _jumpVelocity.y > 0)
+        {
+            _jumpVelocity.y -= Gravity * (JumpCutMultiplier - 1) * Time.fixedDeltaTime;
+        }
+    }
+    private void HandleAttack()
+    {
+        _attackHitbox.transform.localPosition = new Vector3(_attackHitboxOffsetX * _attackDirection, _attackHitbox.transform.localPosition.y, _attackHitbox.transform.localPosition.z);
+
+        if (_isAttacking)
+        {
+            _attackTimer -= Time.fixedDeltaTime;
+
+            if (_attackCheck.IsTouchingObject && !_attackBoosted)
+            {
+                _attackBoostVelocity.x = -_attackCheck.ObjectDirection * AttackBoost;
+                _attackBoosted = true;
+            }
+
+            if (_attackTimer <= 0)
+            {
+                _isAttacking = false;
+                _attackCooldownTimer = AttackCooldown;
+                _attackBoosted = false;
+            }
+        }
+        else
+        {
+            _attackHitbox.SetActive(false);
+        }
+
+        if (_attackCooldownTimer > 0) _attackCooldownTimer -= Time.fixedDeltaTime;
+
+        float attackDecay = NaturalAttackBoostDecay;
+
+        if (_moveDirection != 0)
+        {
+            if (Mathf.Sign(_moveDirection) == Mathf.Sign(_attackBoostVelocity.x))
+            {
+                attackDecay = WithAttackBoostDecay;
+            }
+            else
+            {
+                attackDecay = AgainstAttackBoostDecay;
+            }
+        }
+
+        _attackBoostVelocity.x = Mathf.MoveTowards(_attackBoostVelocity.x, 0f, attackDecay * Time.fixedDeltaTime);
+    }
+    private void HandleVelocityCalculation()
+    {
+        //and other external forces
+        _rb.linearVelocity = _walkVelocity + _dashVelocity + _dashBoostVelocity + _attackBoostVelocity + _jumpVelocity;
     }
 
     private void Jump(InputAction.CallbackContext context)
     {
         _jumpBufferTimer = JumpBufferTime;
+
+        if (_isDashing)
+        {
+            _dashJumpBuffered = true;
+        }
+    }
+    private void Dash(InputAction.CallbackContext context)
+    {
+        if (_isDashing || !_abilities.CanDash || _dashUsed || _dashCooldownTimer > 0) return;
+
+        Vector2 direction = _move.action.ReadValue<Vector2>();
+
+        if (direction == Vector2.zero) direction = new Vector2(transform.localScale.x, 0f);
+
+        _dashDirection = direction.normalized;
+        _dashTimer = DashDuration;
+        _isDashing = true;
+        _dashUsed = true;
+        _dashCooldownTimer = DashCooldown;
+    }
+    private void Attack(InputAction.CallbackContext context)
+    {
+        if (!_abilities.CanAttack || _isDashing || _isAttacking || _attackCooldownTimer > 0) return;
+
+        _attackDirection = _facingDirection;
+
+        _attackHitbox.SetActive(true);
+        _isAttacking = true;
+        _attackTimer = AttackDuration;
     }
 }
