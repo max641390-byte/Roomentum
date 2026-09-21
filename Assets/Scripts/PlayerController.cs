@@ -37,17 +37,23 @@ public class PlayerController : MonoBehaviour
     public float AttackBoost;
     public float AttackDuration;
     public float AttackCooldown;
+    public float SprintSpeedMultiplier;
+    public float SlideSpeedMultiplier;
 
     //Private refs
     [Header("References")]
     [SerializeField] private InputActionReference _move;
     [SerializeField] private InputActionReference _jump;
     [SerializeField] private InputActionReference _dash;
+    [SerializeField] private InputActionReference _slide;
     [SerializeField] private InputActionReference _attack;
+    [SerializeField] private GameObject _playerHitbox;
     [SerializeField] private GameObject _attackHitbox;
+    [SerializeField] private GameObject _slideHitbox;
     [SerializeField] private GroundCheck _groundCheck;
     [SerializeField] private Wallcheck _wallCheck;
     [SerializeField] private AttackCheck _attackCheck;
+    [SerializeField] private LayerMask _solidLayers;
 
     //Private
     private Rigidbody2D _rb;
@@ -68,6 +74,8 @@ public class PlayerController : MonoBehaviour
     private bool _dashJumpBuffered;
     private bool _isTouchingWall;
     private float _wallDirection;
+    private bool _isSliding;
+    private float _slideDirection;
     private bool _isAttacking;
     private float _attackTimer;
     private float _attackCooldownTimer;
@@ -79,6 +87,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 _walkVelocity;
     private Vector2 _dashVelocity;
     private Vector2 _jumpVelocity;
+    private Vector2 _slideVelocity;
     private Vector2 _dashBoostVelocity;
     private Vector2 _attackBoostVelocity;
 
@@ -104,10 +113,14 @@ public class PlayerController : MonoBehaviour
     }
     void Start()
     {
+        _slideVelocity = Vector2.zero;
         _walkVelocity = Vector2.zero;
         _dashVelocity = Vector2.zero;
         _jumpVelocity = Vector2.zero;
         _isDashing = false;
+        _isSliding = false;
+        _playerHitbox.SetActive(true);
+        _slideHitbox.SetActive(false);
     }
     void Update()
     {
@@ -134,6 +147,7 @@ public class PlayerController : MonoBehaviour
     {
         HandleMovement();
         HandleDash();
+        HandleSlide();
         HandleJump();
         HandleGravity();
         HandleAttack();
@@ -143,13 +157,14 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (_isDashing)
+        if (_isDashing || _isSliding)
         {
             _walkVelocity = Vector2.zero;
             return;
         }
 
-        _walkVelocity.x = Mathf.MoveTowards(_walkVelocity.x, _moveDirection * MoveSpeed, (_groundCheck.IsGrounded ? walkAcc : airborneWalkAcc) * Time.fixedDeltaTime);
+        float speed = _abilities.CanSprint ? MoveSpeed * SprintSpeedMultiplier : MoveSpeed;
+        _walkVelocity.x = Mathf.MoveTowards(_walkVelocity.x, _moveDirection * speed, (_groundCheck.IsGrounded ? walkAcc : airborneWalkAcc) * Time.fixedDeltaTime);
     }
     private void HandleDash()
     {
@@ -194,7 +209,7 @@ public class PlayerController : MonoBehaviour
     }
     private void HandleJump()
     {
-        if (_isDashing) return;
+        if (_isDashing || _isSliding) return;
 
         bool jumped = false;
 
@@ -337,14 +352,68 @@ public class PlayerController : MonoBehaviour
 
         _attackBoostVelocity.x = Mathf.MoveTowards(_attackBoostVelocity.x, 0f, attackDecay * Time.fixedDeltaTime);
     }
+    private void HandleSlide()
+    {
+        // Already sliding
+        if (_isSliding)
+        {
+            bool slideHeld = _slide.action.IsPressed();
+            bool grounded = _groundCheck.IsGrounded;
+            bool blocked = IsPlayerHitboxBlocked();
+
+            // If the player wants to stop but is stuck inside something,
+            // keep sliding until the hitbox is clear again.
+            if ((!slideHeld || !grounded) && !blocked)
+            {
+                _isSliding = false;
+                _slideVelocity = Vector2.zero;
+
+                _playerHitbox.SetActive(true);
+                _slideHitbox.SetActive(false);
+
+                return;
+            }
+
+            // Keep moving in the original direction.
+            _slideVelocity.x = _slideDirection * MoveSpeed * SlideSpeedMultiplier;
+            _slideVelocity.y = 0f;
+
+            return;
+        }
+
+        // Not sliding
+        _slideVelocity = Vector2.zero;
+
+        _playerHitbox.SetActive(true);
+        _slideHitbox.SetActive(false);
+
+        if (!_abilities.CanSlide) return;
+        if (!_groundCheck.IsGrounded) return;
+        if (!_slide.action.IsPressed()) return;
+        if (_isDashing || _isAttacking) return;
+
+        // Use current movement direction if there is one.
+        // Otherwise use the last direction the player was facing.
+        if (_moveDirection != 0)
+            _slideDirection = Mathf.Sign(_moveDirection);
+        else
+            _slideDirection = _facingDirection;
+
+        _isSliding = true;
+
+        _playerHitbox.SetActive(false);
+        _slideHitbox.SetActive(true);
+    }
     private void HandleVelocityCalculation()
     {
         //and other external forces
-        _rb.linearVelocity = _walkVelocity + _dashVelocity + _dashBoostVelocity + _attackBoostVelocity + _jumpVelocity;
+        _rb.linearVelocity = _walkVelocity + _dashVelocity + _slideVelocity + _dashBoostVelocity + _attackBoostVelocity + _jumpVelocity;
     }
 
     private void Jump(InputAction.CallbackContext context)
     {
+        if (_isSliding) return;
+
         _jumpBufferTimer = JumpBufferTime;
 
         if (_isDashing)
@@ -352,9 +421,10 @@ public class PlayerController : MonoBehaviour
             _dashJumpBuffered = true;
         }
     }
+
     private void Dash(InputAction.CallbackContext context)
     {
-        if (_isDashing || !_abilities.CanDash || _dashUsed || _dashCooldownTimer > 0) return;
+        if (_isSliding || _isDashing || !_abilities.CanDash || _dashUsed || _dashCooldownTimer > 0) return;
 
         Vector2 direction = _move.action.ReadValue<Vector2>();
 
@@ -375,5 +445,16 @@ public class PlayerController : MonoBehaviour
         _attackHitbox.SetActive(true);
         _isAttacking = true;
         _attackTimer = AttackDuration;
+    }
+
+    private bool IsPlayerHitboxBlocked()
+    {
+        Collider2D collider = _playerHitbox.GetComponent<Collider2D>();
+
+        if (collider == null) return false;
+
+        Bounds bounds = collider.bounds;
+
+        return Physics2D.OverlapBox(bounds.center, bounds.size, 0f, _solidLayers) != null;
     }
 }
