@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PlayerAbilities : MonoBehaviour
 {
+    public bool CanJump;
     public bool CanWallJump;
     public bool CanDoubleJump;
     public bool CanDash;
@@ -9,6 +10,11 @@ public class PlayerAbilities : MonoBehaviour
     public bool CanAttack;
     public bool CanSprint;
     public bool CanSlide;
+
+    public void UnlockJump()
+    {
+        CanJump = true;
+    }
 
     public void UnlockWallJump()
     {

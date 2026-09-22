@@ -354,15 +354,12 @@ public class PlayerController : MonoBehaviour
     }
     private void HandleSlide()
     {
-        // Already sliding
         if (_isSliding)
         {
             bool slideHeld = _slide.action.IsPressed();
             bool grounded = _groundCheck.IsGrounded;
             bool blocked = IsPlayerHitboxBlocked();
 
-            // If the player wants to stop but is stuck inside something,
-            // keep sliding until the hitbox is clear again.
             if ((!slideHeld || !grounded) && !blocked)
             {
                 _isSliding = false;
@@ -374,14 +371,12 @@ public class PlayerController : MonoBehaviour
                 return;
             }
 
-            // Keep moving in the original direction.
             _slideVelocity.x = _slideDirection * MoveSpeed * SlideSpeedMultiplier;
             _slideVelocity.y = 0f;
 
             return;
         }
 
-        // Not sliding
         _slideVelocity = Vector2.zero;
 
         _playerHitbox.SetActive(true);
@@ -392,12 +387,8 @@ public class PlayerController : MonoBehaviour
         if (!_slide.action.IsPressed()) return;
         if (_isDashing || _isAttacking) return;
 
-        // Use current movement direction if there is one.
-        // Otherwise use the last direction the player was facing.
-        if (_moveDirection != 0)
-            _slideDirection = Mathf.Sign(_moveDirection);
-        else
-            _slideDirection = _facingDirection;
+        if (_moveDirection != 0) _slideDirection = Mathf.Sign(_moveDirection);
+        else _slideDirection = _facingDirection;
 
         _isSliding = true;
 
@@ -412,7 +403,7 @@ public class PlayerController : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext context)
     {
-        if (_isSliding) return;
+        if (_isSliding || !_abilities.CanJump) return;
 
         _jumpBufferTimer = JumpBufferTime;
 
