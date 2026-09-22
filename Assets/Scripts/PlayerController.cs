@@ -3,6 +3,9 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Extra")]
+    public Transform RespawnPoint;
+
     //Public
     [Header("Movement")]
     public float MoveSpeed;
@@ -126,8 +129,8 @@ public class PlayerController : MonoBehaviour
     {
         _moveDirection = _move.action.ReadValue<Vector2>().x;
         _jumpHeld = _jump.action.IsPressed();
-        _isTouchingWall = _wallCheck.IsTouchingWall;
-        _wallDirection = _wallCheck.WallDirection;
+
+        CheckWall();
 
         if (_jumpBufferTimer > 0) _jumpBufferTimer -= Time.deltaTime;
         if (_dashCooldownTimer > 0) _dashCooldownTimer -= Time.deltaTime;
@@ -246,7 +249,7 @@ public class PlayerController : MonoBehaviour
         else if (_jumpBufferTimer > 0 && _isTouchingWall && _abilities.CanWallJump)
         {
             _jumpVelocity.y = WallJumpForce;
-            _walkVelocity.x = _wallDirection * WallJumpHorizontalForce;
+            _walkVelocity.x = -_wallDirection * WallJumpHorizontalForce;
 
             _jumpBufferTimer = 0;
             _hangTimer = 0f;
@@ -447,5 +450,52 @@ public class PlayerController : MonoBehaviour
         Bounds bounds = collider.bounds;
 
         return Physics2D.OverlapBox(bounds.center, bounds.size, 0f, _solidLayers) != null;
+    }
+
+    private void CheckWall()
+    {
+        Collider2D collider = _playerHitbox.GetComponent<Collider2D>();
+
+        if (collider == null)
+        {
+            _isTouchingWall = false;
+            _wallDirection = 0f;
+            return;
+        }
+
+        Bounds bounds = collider.bounds;
+
+        float checkDistance = 0.05f;
+
+        RaycastHit2D rightWall = Physics2D.Raycast(new Vector2(bounds.max.x, bounds.center.y), Vector2.right, checkDistance, _solidLayers);
+
+        RaycastHit2D leftWall = Physics2D.Raycast(new Vector2(bounds.min.x, bounds.center.y), Vector2.left, checkDistance, _solidLayers);
+
+        if (rightWall.collider != null)
+        {
+            _isTouchingWall = true;
+            _wallDirection = 1f;
+        }
+        else if (leftWall.collider != null)
+        {
+            _isTouchingWall = true;
+            _wallDirection = -1f;
+        }
+        else
+        {
+            _isTouchingWall = false;
+            _wallDirection = 0f;
+        }
+    }
+
+    public void Respawn()
+    {
+        transform.position = RespawnPoint.position;
+        _walkVelocity = Vector2.zero;
+        _dashVelocity = Vector2.zero;
+        _jumpVelocity = Vector2.zero;
+        _slideVelocity = Vector2.zero;
+        _dashBoostVelocity = Vector2.zero;
+        _attackBoostVelocity = Vector2.zero;
     }
 }
