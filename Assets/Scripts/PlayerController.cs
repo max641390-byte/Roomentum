@@ -3,6 +3,9 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Extra")]
+    public Transform RespawnPoint;
+
     //Public
     [Header("Movement")]
     public float MoveSpeed;
@@ -37,17 +40,23 @@ public class PlayerController : MonoBehaviour
     public float AttackBoost;
     public float AttackDuration;
     public float AttackCooldown;
+    public float SprintSpeedMultiplier;
+    public float SlideSpeedMultiplier;
 
     //Private refs
     [Header("References")]
     [SerializeField] private InputActionReference _move;
     [SerializeField] private InputActionReference _jump;
     [SerializeField] private InputActionReference _dash;
+    [SerializeField] private InputActionReference _slide;
     [SerializeField] private InputActionReference _attack;
+    [SerializeField] private GameObject _playerHitbox;
     [SerializeField] private GameObject _attackHitbox;
+    [SerializeField] private GameObject _slideHitbox;
     [SerializeField] private GroundCheck _groundCheck;
     [SerializeField] private Wallcheck _wallCheck;
     [SerializeField] private AttackCheck _attackCheck;
+    [SerializeField] private LayerMask _solidLayers;
 
     //Private
     private Rigidbody2D _rb;
@@ -68,6 +77,8 @@ public class PlayerController : MonoBehaviour
     private bool _dashJumpBuffered;
     private bool _isTouchingWall;
     private float _wallDirection;
+    private bool _isSliding;
+    private float _slideDirection;
     private bool _isAttacking;
     private float _attackTimer;
     private float _attackCooldownTimer;
@@ -79,6 +90,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 _walkVelocity;
     private Vector2 _dashVelocity;
     private Vector2 _jumpVelocity;
+    private Vector2 _slideVelocity;
     private Vector2 _dashBoostVelocity;
     private Vector2 _attackBoostVelocity;
 
@@ -104,17 +116,21 @@ public class PlayerController : MonoBehaviour
     }
     void Start()
     {
+        _slideVelocity = Vector2.zero;
         _walkVelocity = Vector2.zero;
         _dashVelocity = Vector2.zero;
         _jumpVelocity = Vector2.zero;
         _isDashing = false;
+        _isSliding = false;
+        _playerHitbox.SetActive(true);
+        _slideHitbox.SetActive(false);
     }
     void Update()
     {
         _moveDirection = _move.action.ReadValue<Vector2>().x;
         _jumpHeld = _jump.action.IsPressed();
-        _isTouchingWall = _wallCheck.IsTouchingWall;
-        _wallDirection = _wallCheck.WallDirection;
+
+        CheckWall();
 
         if (_jumpBufferTimer > 0) _jumpBufferTimer -= Time.deltaTime;
         if (_dashCooldownTimer > 0) _dashCooldownTimer -= Time.deltaTime;
@@ -134,6 +150,7 @@ public class PlayerController : MonoBehaviour
     {
         HandleMovement();
         HandleDash();
+        HandleSlide();
         HandleJump();
         HandleGravity();
         HandleAttack();
@@ -143,13 +160,14 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (_isDashing)
+        if (_isDashing || _isSliding)
         {
             _walkVelocity = Vector2.zero;
             return;
         }
 
-        _walkVelocity.x = Mathf.MoveTowards(_walkVelocity.x, _moveDirection * MoveSpeed, (_groundCheck.IsGrounded ? walkAcc : airborneWalkAcc) * Time.fixedDeltaTime);
+        float speed = _abilities.CanSprint ? MoveSpeed * SprintSpeedMultiplier : MoveSpeed;
+        _walkVelocity.x = Mathf.MoveTowards(_walkVelocity.x, _moveDirection * speed, (_groundCheck.IsGrounded ? walkAcc : airborneWalkAcc) * Time.fixedDeltaTime);
     }
     private void HandleDash()
     {
@@ -194,7 +212,7 @@ public class PlayerController : MonoBehaviour
     }
     private void HandleJump()
     {
-        if (_isDashing) return;
+        if (_isDashing || _isSliding) return;
 
         bool jumped = false;
 
@@ -231,7 +249,7 @@ public class PlayerController : MonoBehaviour
         else if (_jumpBufferTimer > 0 && _isTouchingWall && _abilities.CanWallJump)
         {
             _jumpVelocity.y = WallJumpForce;
-            _walkVelocity.x = _wallDirection * WallJumpHorizontalForce;
+            _walkVelocity.x = -_wallDirection * WallJumpHorizontalForce;
 
             _jumpBufferTimer = 0;
             _hangTimer = 0f;
@@ -337,14 +355,59 @@ public class PlayerController : MonoBehaviour
 
         _attackBoostVelocity.x = Mathf.MoveTowards(_attackBoostVelocity.x, 0f, attackDecay * Time.fixedDeltaTime);
     }
+    private void HandleSlide()
+    {
+        if (_isSliding)
+        {
+            bool slideHeld = _slide.action.IsPressed();
+            bool grounded = _groundCheck.IsGrounded;
+            bool blocked = IsPlayerHitboxBlocked();
+
+            if ((!slideHeld || !grounded) && !blocked)
+            {
+                _isSliding = false;
+                _slideVelocity = Vector2.zero;
+
+                _playerHitbox.SetActive(true);
+                _slideHitbox.SetActive(false);
+
+                return;
+            }
+
+            _slideVelocity.x = _slideDirection * MoveSpeed * SlideSpeedMultiplier;
+            _slideVelocity.y = 0f;
+
+            return;
+        }
+
+        _slideVelocity = Vector2.zero;
+
+        _playerHitbox.SetActive(true);
+        _slideHitbox.SetActive(false);
+
+        if (!_abilities.CanSlide) return;
+        if (!_groundCheck.IsGrounded) return;
+        if (!_slide.action.IsPressed()) return;
+        if (_isDashing || _isAttacking) return;
+
+        if (_moveDirection != 0) _slideDirection = Mathf.Sign(_moveDirection);
+        else _slideDirection = _facingDirection;
+
+        _isSliding = true;
+
+        _playerHitbox.SetActive(false);
+        _slideHitbox.SetActive(true);
+    }
     private void HandleVelocityCalculation()
     {
         //and other external forces
-        _rb.linearVelocity = _walkVelocity + _dashVelocity + _dashBoostVelocity + _attackBoostVelocity + _jumpVelocity;
+        _rb.linearVelocity = _walkVelocity + _dashVelocity + _slideVelocity + _dashBoostVelocity + _attackBoostVelocity + _jumpVelocity;
     }
 
     private void Jump(InputAction.CallbackContext context)
     {
+        if (_isSliding || !_abilities.CanJump) return;
+
         _jumpBufferTimer = JumpBufferTime;
 
         if (_isDashing)
@@ -352,9 +415,10 @@ public class PlayerController : MonoBehaviour
             _dashJumpBuffered = true;
         }
     }
+
     private void Dash(InputAction.CallbackContext context)
     {
-        if (_isDashing || !_abilities.CanDash || _dashUsed || _dashCooldownTimer > 0) return;
+        if (_isSliding || _isDashing || !_abilities.CanDash || _dashUsed || _dashCooldownTimer > 0) return;
 
         Vector2 direction = _move.action.ReadValue<Vector2>();
 
@@ -375,5 +439,63 @@ public class PlayerController : MonoBehaviour
         _attackHitbox.SetActive(true);
         _isAttacking = true;
         _attackTimer = AttackDuration;
+    }
+
+    private bool IsPlayerHitboxBlocked()
+    {
+        Collider2D collider = _playerHitbox.GetComponent<Collider2D>();
+
+        if (collider == null) return false;
+
+        Bounds bounds = collider.bounds;
+
+        return Physics2D.OverlapBox(bounds.center, bounds.size, 0f, _solidLayers) != null;
+    }
+
+    private void CheckWall()
+    {
+        Collider2D collider = _playerHitbox.GetComponent<Collider2D>();
+
+        if (collider == null)
+        {
+            _isTouchingWall = false;
+            _wallDirection = 0f;
+            return;
+        }
+
+        Bounds bounds = collider.bounds;
+
+        float checkDistance = 0.05f;
+
+        RaycastHit2D rightWall = Physics2D.Raycast(new Vector2(bounds.max.x, bounds.center.y), Vector2.right, checkDistance, _solidLayers);
+
+        RaycastHit2D leftWall = Physics2D.Raycast(new Vector2(bounds.min.x, bounds.center.y), Vector2.left, checkDistance, _solidLayers);
+
+        if (rightWall.collider != null)
+        {
+            _isTouchingWall = true;
+            _wallDirection = 1f;
+        }
+        else if (leftWall.collider != null)
+        {
+            _isTouchingWall = true;
+            _wallDirection = -1f;
+        }
+        else
+        {
+            _isTouchingWall = false;
+            _wallDirection = 0f;
+        }
+    }
+
+    public void Respawn()
+    {
+        transform.position = RespawnPoint.position;
+        _walkVelocity = Vector2.zero;
+        _dashVelocity = Vector2.zero;
+        _jumpVelocity = Vector2.zero;
+        _slideVelocity = Vector2.zero;
+        _dashBoostVelocity = Vector2.zero;
+        _attackBoostVelocity = Vector2.zero;
     }
 }
