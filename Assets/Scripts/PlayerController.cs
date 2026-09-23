@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
@@ -61,6 +62,7 @@ public class PlayerController : MonoBehaviour
     //Private
     private Rigidbody2D _rb;
     private PlayerAbilities _abilities;
+
     private float _moveDirection;
     private float _facingDirection;
     private float _jumpBufferTimer;
@@ -77,6 +79,7 @@ public class PlayerController : MonoBehaviour
     private bool _dashJumpBuffered;
     private bool _isTouchingWall;
     private float _wallDirection;
+    private bool _rdyWalljump; //LUKAS
     private bool _isSliding;
     private float _slideDirection;
     private bool _isAttacking;
@@ -93,6 +96,10 @@ public class PlayerController : MonoBehaviour
     private Vector2 _slideVelocity;
     private Vector2 _dashBoostVelocity;
     private Vector2 _attackBoostVelocity;
+
+    //Animator
+    private Animator anim; //LUKAS
+    private SpriteRenderer rend;
 
     private void OnEnable()
     {
@@ -116,12 +123,15 @@ public class PlayerController : MonoBehaviour
     }
     void Start()
     {
+        anim = GetComponent <Animator>(); //LUKAS
+        rend = GetComponent<SpriteRenderer>();
         _slideVelocity = Vector2.zero;
         _walkVelocity = Vector2.zero;
         _dashVelocity = Vector2.zero;
         _jumpVelocity = Vector2.zero;
         _isDashing = false;
         _isSliding = false;
+        _rdyWalljump = false; //LUKAS
         _playerHitbox.SetActive(true);
         _slideHitbox.SetActive(false);
     }
@@ -130,7 +140,25 @@ public class PlayerController : MonoBehaviour
         _moveDirection = _move.action.ReadValue<Vector2>().x;
         _jumpHeld = _jump.action.IsPressed();
 
+        anim.SetFloat("MoveSpeed",Mathf.Abs (_rb.linearVelocity.x)); //LUKAS
+        anim.SetFloat("VerticalSpeed", (_rb.linearVelocityY));
+        anim.SetBool("IsGrounded", _groundCheck.IsGrounded);
+        anim.SetBool("IsDashing", _isDashing);
+        anim.SetBool("IsSliding", _slide.action.IsPressed());
+        anim.SetBool("IsAttacking", _isAttacking);
+        anim.SetBool("WalljumpRdy",_rdyWalljump);
+        //Debug.Log(_rb.linearVelocityY.ToString());
+
         CheckWall();
+
+        if (_facingDirection < 0f) //LUKAS
+        {
+            FlipSprite(true);
+        }
+        if (_facingDirection > 0f) //LUKAS
+        {
+            FlipSprite(false);
+        }
 
         if (_jumpBufferTimer > 0) _jumpBufferTimer -= Time.deltaTime;
         if (_dashCooldownTimer > 0) _dashCooldownTimer -= Time.deltaTime;
@@ -157,7 +185,11 @@ public class PlayerController : MonoBehaviour
 
         HandleVelocityCalculation();
     }
+    private void FlipSprite(bool direction) //LUKAS
+    {
+        rend.flipX = direction; 
 
+    }
     private void HandleMovement()
     {
         if (_isDashing || _isSliding)
@@ -215,6 +247,7 @@ public class PlayerController : MonoBehaviour
         if (_isDashing || _isSliding) return;
 
         bool jumped = false;
+        _rdyWalljump = false;
 
         if (_dashJumpBuffered)
         {
@@ -248,6 +281,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (_jumpBufferTimer > 0 && _isTouchingWall && _abilities.CanWallJump)
         {
+            _rdyWalljump = true; // lukas
             _jumpVelocity.y = WallJumpForce;
             _walkVelocity.x = -_wallDirection * WallJumpHorizontalForce;
 
@@ -258,6 +292,7 @@ public class PlayerController : MonoBehaviour
             _dashCooldownTimer = 0f;
 
             jumped = true;
+            
         }
         else if (_jumpBufferTimer > 0 && _abilities.CanDoubleJump && !_doubleJumpUsed)
         {
