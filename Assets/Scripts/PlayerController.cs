@@ -58,10 +58,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Wallcheck _wallCheck;
     [SerializeField] private AttackCheck _attackCheck;
     [SerializeField] private LayerMask _solidLayers;
+    [SerializeField] private AudioClip jumpSound, doubleJumpSound, dashSound, slideSound, attackSound; // Lukas
 
     //Private
     private Rigidbody2D _rb;
     private PlayerAbilities _abilities;
+    private AudioSource audioSource;
 
     private float _moveDirection;
     private float _facingDirection;
@@ -124,7 +126,8 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         anim = GetComponent <Animator>(); //LUKAS
-        rend = GetComponent<SpriteRenderer>();
+        rend = GetComponent<SpriteRenderer>();//Lukas
+        audioSource = GetComponent<AudioSource>(); //Lukas
         _slideVelocity = Vector2.zero;
         _walkVelocity = Vector2.zero;
         _dashVelocity = Vector2.zero;
@@ -208,6 +211,7 @@ public class PlayerController : MonoBehaviour
             _dashTimer -= Time.fixedDeltaTime;
             _dashVelocity = _dashDirection * DashSpeed;
             _jumpVelocity.y = 0f;
+            
 
             if (_dashTimer <= 0)
             {
@@ -254,6 +258,7 @@ public class PlayerController : MonoBehaviour
             if (_coyoteTimer > 0)
             {
                 _jumpVelocity.y = JumpForce;
+                
 
                 _coyoteTimer = 0;
                 jumped = true;
@@ -262,6 +267,7 @@ public class PlayerController : MonoBehaviour
             {
                 _hangTimer = 0f;
                 _jumpVelocity.y = JumpForce;
+                audioSource.PlayOneShot(doubleJumpSound, 0.3f);
 
                 _doubleJumpUsed = true;
                 jumped = true;
@@ -276,6 +282,7 @@ public class PlayerController : MonoBehaviour
 
             _jumpBufferTimer = 0;
             _coyoteTimer = 0;
+            audioSource.PlayOneShot(jumpSound, 0.3f); //LUKAS
 
             jumped = true;
         }
@@ -301,6 +308,7 @@ public class PlayerController : MonoBehaviour
 
             _jumpBufferTimer = 0;
             _doubleJumpUsed = true;
+            audioSource.PlayOneShot(doubleJumpSound, 0.3f);
 
             jumped = true;
         }
@@ -346,7 +354,7 @@ public class PlayerController : MonoBehaviour
             _jumpVelocity.y -= Gravity * (JumpCutMultiplier - 1) * Time.fixedDeltaTime;
         }
     }
-    private void HandleAttack()
+    public void HandleAttack()
     {
         _attackHitbox.transform.localPosition = new Vector3(_attackHitboxOffsetX * _attackDirection, _attackHitbox.transform.localPosition.y, _attackHitbox.transform.localPosition.z);
 
@@ -459,6 +467,7 @@ public class PlayerController : MonoBehaviour
 
         if (direction == Vector2.zero) direction = new Vector2(transform.localScale.x, 0f);
 
+        audioSource.PlayOneShot(dashSound, 0.3f);//LUKAS
         _dashDirection = direction.normalized;
         _dashTimer = DashDuration;
         _isDashing = true;
@@ -470,7 +479,7 @@ public class PlayerController : MonoBehaviour
         if (!_abilities.CanAttack || _isDashing || _isAttacking || _attackCooldownTimer > 0) return;
 
         _attackDirection = _facingDirection;
-
+        audioSource.PlayOneShot(attackSound, 0.3f);
         _attackHitbox.SetActive(true);
         _isAttacking = true;
         _attackTimer = AttackDuration;

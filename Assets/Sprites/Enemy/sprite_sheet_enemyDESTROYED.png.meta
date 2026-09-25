@@ -1,0 +1,345 @@
+fileFormatVersion: 2
+guid: fcecf9d19f12b4c4199e9b33a4fb6af4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3852072690777604772
+    second: sprite_sheet_enemyDESTROYED_0
+  - first:
+      213: 7797663587735268194
+    second: sprite_sheet_enemyDESTROYED_1
+  - first:
+      213: 5333903059011826841
+    second: sprite_sheet_enemyDESTROYED_2
+  - first:
+      213: -3067556659656297229
+    second: sprite_sheet_enemyDESTROYED_3
+  - first:
+      213: -3280062875169035758
+    second: sprite_sheet_enemyDESTROYED_4
+  - first:
+      213: -5800120386570317368
+    second: sprite_sheet_enemyDESTROYED_5
+  - first:
+      213: 1654918692613636850
+    second: sprite_sheet_enemyDESTROYED_6
+  - first:
+      213: -6402263916002632536
+    second: sprite_sheet_enemyDESTROYED_7
+  - first:
+      213: 7719489377900784117
+    second: sprite_sheet_enemyDESTROYED_8
+  - first:
+      213: 138905440719368608
+    second: sprite_sheet_enemyDESTROYED_9
+  - first:
+      213: 3099430260311403500
+    second: sprite_sheet_enemyDESTROYED_10
+  - first:
+      213: -7527533884043910892
+    second: sprite_sheet_enemyDESTROYED_11
+  - first:
+      213: 1374421615941630968
+    second: sprite_sheet_enemyDESTROYED_12
+  - first:
+      213: 2995878284550215240
+    second: sprite_sheet_enemyDESTROYED_13
+  - first:
+      213: 7488229420910138464
+    second: sprite_sheet_enemyDESTROYED_14
+  - first:
+      213: -5636582405743276964
+    second: sprite_sheet_enemyDESTROYED_15
+  - first:
+      213: -7523453124195315833
+    second: sprite_sheet_enemyDESTROYED_16
+  - first:
+      213: 8028925625881476998
+    second: sprite_sheet_enemyDESTROYED_17
+  - first:
+      213: -672605958597237089
+    second: sprite_sheet_enemyDESTROYED_18
+  - first:
+      213: -6139623052513188115
+    second: sprite_sheet_enemyDESTROYED_19
+  - first:
+      213: 1927342883286270145
+    second: sprite_sheet_enemyDESTROYED_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a248cef3bf457530800000000000000
+      internalID: 3852072690777604772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_1
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26b65f028bdd63c60800000000000000
+      internalID: 7797663587735268194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_2
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 994f4ca6294d50a40800000000000000
+      internalID: 5333903059011826841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_3
+      rect:
+        serializedVersion: 2
+        x: 1500
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f47dcc7879dd65d0800000000000000
+      internalID: -3067556659656297229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_4
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21a6a9c8130ea72d0800000000000000
+      internalID: -3280062875169035758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_5
+      rect:
+        serializedVersion: 2
+        x: 2500
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c199ff1d35d18fa0800000000000000
+      internalID: -5800120386570317368
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite_sheet_enemyDESTROYED_6
+      rect:
+        serializedVersion: 2
+        x: 3000
+        y: 0
+        width: 500
+        height: 500
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f2c36568c377f610800000000000000
+      internalID: 1654918692613636850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 4fcc9204fed5b8e4f8a88bf1719d8218
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":7.0,"y":1.0},"gridSpriteSize":{"x":500.0,"y":500.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.0},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":7,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      sprite_sheet_enemyDESTROYED_0: 3852072690777604772
+      sprite_sheet_enemyDESTROYED_1: 7797663587735268194
+      sprite_sheet_enemyDESTROYED_2: 5333903059011826841
+      sprite_sheet_enemyDESTROYED_3: -3067556659656297229
+      sprite_sheet_enemyDESTROYED_4: -3280062875169035758
+      sprite_sheet_enemyDESTROYED_5: -5800120386570317368
+      sprite_sheet_enemyDESTROYED_6: 1654918692613636850
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
