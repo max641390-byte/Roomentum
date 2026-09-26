@@ -4,9 +4,9 @@ public class PowerupController : MonoBehaviour
 {
     public string abilityName;
     private PlayerAbilities _playerAbilities;
-
     void Start()
     {
+
         _playerAbilities = FindAnyObjectByType<PlayerAbilities>();
     }
 
@@ -14,6 +14,7 @@ public class PowerupController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            
             switch (abilityName)
             {
                 case "Jump":
@@ -44,7 +45,6 @@ public class PowerupController : MonoBehaviour
                     Debug.LogWarning("Unknown ability: " + abilityName);
                     break;
             }
-
             Debug.Log("Power-up collected!");
             Destroy(gameObject);
         }

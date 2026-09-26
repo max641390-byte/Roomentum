@@ -1,22 +1,21 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 
 public class EnemyMovement : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     [SerializeField] private float moveSpeed = 2.0f;
-    [SerializeField] private float bounciness = 100f;
-    [SerializeField] private int damageGiven = 1;
+    
 
-    //knockback
-    [SerializeField] private float knockbackForce = 100f;
-    [SerializeField] private float upwardsForce = 5f;
     [SerializeField] private GameObject _enemyHitbox;
     [SerializeField] private GameObject _deadHitbox;
     [SerializeField] private GameObject _takeAttackHitbox;
+    [SerializeField] private AudioClip enemyDeathSound;
 
     private Animator anim; //LUKAS
     private SpriteRenderer rend;
+    private AudioSource audioSource;
 
     private bool isDestroyed = false;
 
@@ -24,6 +23,7 @@ public class EnemyMovement : MonoBehaviour
     {
         rend = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>(); //LUKAS
+        audioSource = GetComponent<AudioSource>(); //Lukas
         _enemyHitbox.SetActive(true);
         _deadHitbox.SetActive(false);
         _takeAttackHitbox.SetActive(true);
@@ -92,6 +92,7 @@ public class EnemyMovement : MonoBehaviour
             }*/
 
             moveSpeed = 0;
+            audioSource.PlayOneShot(enemyDeathSound, 0.3f);
             isDestroyed = true;
             _enemyHitbox.SetActive(false);
             _deadHitbox.SetActive(true);

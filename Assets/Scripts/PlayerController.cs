@@ -58,7 +58,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Wallcheck _wallCheck;
     [SerializeField] private AttackCheck _attackCheck;
     [SerializeField] private LayerMask _solidLayers;
-    [SerializeField] private AudioClip jumpSound, doubleJumpSound, dashSound, slideSound, attackSound; // Lukas
+    [SerializeField] private AudioClip jumpSound, doubleJumpSound, dashSound, slideSound, attackSound, powerupSound,noteSound, flagSound, playerDeathSound; // Lukas
 
     //Private
     private Rigidbody2D _rb;
@@ -147,12 +147,16 @@ public class PlayerController : MonoBehaviour
         anim.SetFloat("VerticalSpeed", (_rb.linearVelocityY));
         anim.SetBool("IsGrounded", _groundCheck.IsGrounded);
         anim.SetBool("IsDashing", _isDashing);
-        anim.SetBool("IsSliding", _slide.action.IsPressed());
+        anim.SetBool("IsSliding", _isSliding);
         anim.SetBool("IsAttacking", _isAttacking);
         anim.SetBool("WalljumpRdy",_rdyWalljump);
         //Debug.Log(_rb.linearVelocityY.ToString());
 
-        CheckWall();
+
+     
+
+
+                CheckWall();
 
         if (_facingDirection < 0f) //LUKAS
         {
@@ -187,6 +191,18 @@ public class PlayerController : MonoBehaviour
         HandleAttack();
 
         HandleVelocityCalculation();
+
+    }
+    void OnTriggerEnter2D(Collider2D other) // powerup sound fx
+    {
+        if (other.CompareTag("Powerup"))
+            audioSource.PlayOneShot(powerupSound, 0.3f);
+        if (other.CompareTag("Note"))
+            audioSource.PlayOneShot(noteSound, 0.3f);
+        if (other.CompareTag("Flag"))
+            audioSource.PlayOneShot(flagSound, 0.3f);
+        if (other.CompareTag("Killzone"))
+            audioSource.PlayOneShot(playerDeathSound, 0.3f);
     }
     private void FlipSprite(bool direction) //LUKAS
     {
@@ -400,11 +416,15 @@ public class PlayerController : MonoBehaviour
     }
     private void HandleSlide()
     {
+    
         if (_isSliding)
         {
+
             bool slideHeld = _slide.action.IsPressed();
             bool grounded = _groundCheck.IsGrounded;
             bool blocked = IsPlayerHitboxBlocked();
+           
+
 
             if ((!slideHeld || !grounded) && !blocked)
             {
@@ -413,6 +433,7 @@ public class PlayerController : MonoBehaviour
 
                 _playerHitbox.SetActive(true);
                 _slideHitbox.SetActive(false);
+              
 
                 return;
             }
@@ -438,8 +459,13 @@ public class PlayerController : MonoBehaviour
 
         _isSliding = true;
 
+        if (_isSliding == true)
+            {
+            Debug.Log("Sliding");
+        }
         _playerHitbox.SetActive(false);
-        _slideHitbox.SetActive(true);
+           _slideHitbox.SetActive(true);
+
     }
     private void HandleVelocityCalculation()
     {
