@@ -55,10 +55,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject _attackHitbox;
     [SerializeField] private GameObject _slideHitbox;
     [SerializeField] private GroundCheck _groundCheck;
+    [SerializeField] private GroundCheck _roofCheck;
     [SerializeField] private Wallcheck _wallCheck;
     [SerializeField] private AttackCheck _attackCheck;
     [SerializeField] private LayerMask _solidLayers;
-    [SerializeField] private AudioClip jumpSound, doubleJumpSound, dashSound, slideSound, attackSound, powerupSound,noteSound, flagSound, playerDeathSound; // Lukas
+    [SerializeField] private AudioClip jumpSound, doubleJumpSound, dashSound, slideSound, attackSound, powerupSound, noteSound, flagSound, playerDeathSound; // Lukas
 
     //Private
     private Rigidbody2D _rb;
@@ -125,7 +126,7 @@ public class PlayerController : MonoBehaviour
     }
     void Start()
     {
-        anim = GetComponent <Animator>(); //LUKAS
+        anim = GetComponent<Animator>(); //LUKAS
         rend = GetComponent<SpriteRenderer>();//Lukas
         audioSource = GetComponent<AudioSource>(); //Lukas
         _slideVelocity = Vector2.zero;
@@ -143,20 +144,17 @@ public class PlayerController : MonoBehaviour
         _moveDirection = _move.action.ReadValue<Vector2>().x;
         _jumpHeld = _jump.action.IsPressed();
 
-        anim.SetFloat("MoveSpeed",Mathf.Abs (_rb.linearVelocity.x)); //LUKAS
+        anim.SetFloat("MoveSpeed", Mathf.Abs(_rb.linearVelocity.x)); //LUKAS
         anim.SetFloat("VerticalSpeed", (_rb.linearVelocityY));
         anim.SetBool("IsGrounded", _groundCheck.IsGrounded);
         anim.SetBool("IsDashing", _isDashing);
         anim.SetBool("IsSliding", _isSliding);
         anim.SetBool("IsAttacking", _isAttacking);
-        anim.SetBool("WalljumpRdy",_rdyWalljump);
+        anim.SetBool("WalljumpRdy", _rdyWalljump);
         //Debug.Log(_rb.linearVelocityY.ToString());
 
 
-     
-
-
-                CheckWall();
+        CheckWall();
 
         if (_facingDirection < 0f) //LUKAS
         {
@@ -206,7 +204,7 @@ public class PlayerController : MonoBehaviour
     }
     private void FlipSprite(bool direction) //LUKAS
     {
-        rend.flipX = direction; 
+        rend.flipX = direction;
 
     }
     private void HandleMovement()
@@ -227,7 +225,7 @@ public class PlayerController : MonoBehaviour
             _dashTimer -= Time.fixedDeltaTime;
             _dashVelocity = _dashDirection * DashSpeed;
             _jumpVelocity.y = 0f;
-            
+
 
             if (_dashTimer <= 0)
             {
@@ -274,7 +272,7 @@ public class PlayerController : MonoBehaviour
             if (_coyoteTimer > 0)
             {
                 _jumpVelocity.y = JumpForce;
-                
+
 
                 _coyoteTimer = 0;
                 jumped = true;
@@ -315,7 +313,7 @@ public class PlayerController : MonoBehaviour
             _dashCooldownTimer = 0f;
 
             jumped = true;
-            
+
         }
         else if (_jumpBufferTimer > 0 && _abilities.CanDoubleJump && !_doubleJumpUsed)
         {
@@ -344,6 +342,11 @@ public class PlayerController : MonoBehaviour
     }
     private void HandleGravity()
     {
+        if (_roofCheck.IsGrounded && _jumpVelocity.y > 0)
+        {
+            _jumpVelocity.y = 0;
+        }
+
         if (_groundCheck.IsGrounded && _jumpVelocity.y <= 0)
         {
             _jumpVelocity.y = -GroundStickForce;
@@ -416,14 +419,14 @@ public class PlayerController : MonoBehaviour
     }
     private void HandleSlide()
     {
-    
+
         if (_isSliding)
         {
 
             bool slideHeld = _slide.action.IsPressed();
             bool grounded = _groundCheck.IsGrounded;
             bool blocked = IsPlayerHitboxBlocked();
-           
+
 
 
             if ((!slideHeld || !grounded) && !blocked)
@@ -433,7 +436,7 @@ public class PlayerController : MonoBehaviour
 
                 _playerHitbox.SetActive(true);
                 _slideHitbox.SetActive(false);
-              
+
 
                 return;
             }
@@ -460,11 +463,11 @@ public class PlayerController : MonoBehaviour
         _isSliding = true;
 
         if (_isSliding == true)
-            {
+        {
             Debug.Log("Sliding");
         }
         _playerHitbox.SetActive(false);
-           _slideHitbox.SetActive(true);
+        _slideHitbox.SetActive(true);
 
     }
     private void HandleVelocityCalculation()
